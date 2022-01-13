@@ -1,23 +1,15 @@
-<!DOCTYPE html>
 
-    <head>
-        <title>All Campgrounds</title>
-    </head>
-
-    <body>
-        <h1>All Campgrounds</h1>
-        <div>
-            <a href="/campgrounds/new"> New Campground </a>
-        </div>
-        <ul>
-            <% for (let campground of campgrounds){ %>
-                <li>
-                <a href="/campgrounds/<%= campground._id %>">
-                    <%= campground.title %>
-                </a></li> 
-            <% } %> 
-        </ul>
-    </body>
-
-</html>
+<% layout('layout/boilerplate') %>
+<h1>All Campgrounds</h1>
+<div>
+    <a href="/campgrounds/new"> New Campground </a>
+</div>
+<ul>
+    <% for (let campground of campgrounds){ %>
+        <li>
+        <a href="/campgrounds/<%= campground._id %>">
+            <%= campground.title %>
+        </a></li> 
+    <% } %> 
+</ul>
 
