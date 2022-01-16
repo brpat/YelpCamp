@@ -7,6 +7,9 @@ const methodOverride = require('method-override');
 const morgan = require('morgan');
 const { nextTick } = require('process');
 const ejsMate = require('ejs-mate');
+const { reset } = require('nodemon');
+const ExpressError = require('./utils/ExpressError');
+const catchAsync = require('./utils/catchAsync');
 
 app.engine('ejs', ejsMate);
 app.use((morgan('tiny')));
@@ -51,51 +54,74 @@ app.get('/', (req, res) => {
 
 app.use(express.urlencoded({extended:true}));
 
-app.get('/campgrounds', async (req, res) => { 
+app.get('/error', (req,res) => {
+    throw new AppError('Unknown Error occured', 404);
+    //console.log(unknownVariable);
+});
+
+
+app.get('/campgrounds', catchAsync(async (req, res) => { 
     const campgrounds = await Campground.find({});
     res.render('campgrounds/index', {campgrounds});
-})
+}))
 
 app.get('/campgrounds/new', (req, res) => { 
     res.render('campgrounds/new');
 })
 
 
-app.get('/campgrounds/:id', async (req, res) => { 
+app.get('/campgrounds/:id', catchAsync(async (req, res) => { 
     const { id } = req.params;
     const campground = await Campground.findById(id);
     res.render('campgrounds/show', {campground});
-})
+}))
 
-app.get('/newcampground', async (req, res) => {
+app.get('/newcampground', catchAsync(async (req, res) => {
     const camp = new Campground({title: "My Back Yard" });
     await camp.save();
     res.send(camp);
-})
+}))
 
-app.get('/campgrounds/:id/edit', async (req, res) => {
+app.get('/campgrounds/:id/edit', catchAsync(async (req, res) => {
     const { id } = req.params;
     const campground = await Campground.findById(id);
     res.render('campgrounds/edit', {campground});
-})
+}))
 
-app.post('/campgrounds', async (req, res) => { 
+app.post('/campgrounds', catchAsync(async (req, res,next) => { 
+
+    if(!req.body.campground) throw new ExpressError('In valid Campground Data', 400);
+
     const campground = new Campground(req.body.campground);
     await campground.save(); 
     res.redirect(`/campgrounds/${campground._id}`);
-})
+}));
 
-app.put('/campgrounds/:id', async (req, res) => {
+app.put('/campgrounds/:id', catchAsync(async (req, res) => {
     const {id} = req.params;
     const campground = await Campground.findByIdAndUpdate(id, {...req.body.campground});
     res.redirect('/campgrounds');
-});
+}));
 
-app.delete('/campgrounds/:id/', async (req, res) => {
+app.delete('/campgrounds/:id/', catchAsync(async (req, res) => {
     const {id} = req.params;
     await Campground.findByIdAndDelete(id);
     res.redirect('/campgrounds');
+}));
+
+// match all requests,
+app.all('*', (req, res, next) => {
+    next(new ExpressError('Page not found', 404));
 })
+
+// custom error handler
+app.use((err, req, res, next) => {
+    const {statusCode=500,message='Something went wrong'} = err
+    //res.send('Something went wrong');
+    res.status(statusCode).send(message);
+    // below sends to default handler;
+    //next(err);
+});
 
 app.listen(3000, ()=> {
     console.log('Serving on port 3000');
