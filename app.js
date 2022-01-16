@@ -4,6 +4,29 @@ const path = require('path')
 const mongoose = require('mongoose');
 const Campground = require('./models/campground');
 const methodOverride = require('method-override');
+const morgan = require('morgan');
+const { nextTick } = require('process');
+const ejsMate = require('ejs-mate');
+
+app.engine('ejs', ejsMate);
+app.use((morgan('tiny')));
+
+
+// custom middleware logger
+// app.use((req,res,next) =>{
+//     req.requestTime = Date.now();
+//     console.log(req.method.toUpperCase(), req.path);
+//     next();
+// });
+
+// custom middleware logger for a specific path.
+// Will work on all CRUD operations for path
+// app.use('/newcampground', (req,res,next) =>{
+//     req.requestTime = Date.now();
+//     console.log(req.method.toUpperCase(), req.path);
+//     next();
+// });
+
 
 mongoose.connect('mongodb://localhost:27017/yelp-camp', {
     useNewUrlParser:true,
