@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // ...
+            "preLaunchTask": "Run-Yelp-DB" // The name of the task defined above
+            // ...
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Run Yelp Camp",
+            "preLaunchTask": "Run-Yelp-DB", 
+            "webRoot": "${workspaceFolder}",
+            "program": "${workspaceFolder}\\app.js",
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Chrome",
+            "url": "http://localhost:3000/",
+            "webRoot": "${workspaceRoot}",
+          }
+    ],
+    "compounds": [
+        {
+          "name": "Full-stack",
+          "configurations": ["Run Yelp Camp", "Chrome"]
+        }
+      ]
+}
