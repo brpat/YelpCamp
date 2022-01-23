@@ -5,15 +5,9 @@
     "version": "0.2.0",
     "configurations": [
         {
-            // ...
-            "preLaunchTask": "Run-Yelp-DB" // The name of the task defined above
-            // ...
-        },
-        {
             "type": "node",
             "request": "launch",
             "name": "Run Yelp Camp",
-            "preLaunchTask": "Run-Yelp-DB", 
             "webRoot": "${workspaceFolder}",
             "program": "${workspaceFolder}\\app.js",
         },

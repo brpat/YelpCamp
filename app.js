@@ -10,6 +10,10 @@ const ejsMate = require('ejs-mate');
 const { reset } = require('nodemon');
 const ExpressError = require('./utils/ExpressError');
 const catchAsync = require('./utils/catchAsync');
+const Joi = require('joi');
+const { campgroundSchema, reviewSchema} = require('./schemas.js');
+const Review = require('./models/review');
+
 
 app.engine('ejs', ejsMate);
 app.use((morgan('tiny')));
@@ -48,6 +52,29 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(methodOverride('_method'))
 
+
+const validateCampground = (req, res, next) => {
+    const {error} = campgroundSchema.validate(req.body);
+    if(error){
+        const msg = error.details.map(el => el.message).join(',');
+        throw new ExpressError(msg, 400);
+    }else{
+        next();
+    }
+};
+
+
+const validateReview = (req, res, next) => {
+    const {error} = reviewSchema.validate(req.body);
+    if(error){
+        const msg = error.details.map(el => el.message).join(',');
+        throw new ExpressError(msg, 400);
+    }else{
+        next();
+    }
+}
+
+
 app.get('/', (req, res) => { 
     res.render('home');
 })
@@ -55,7 +82,7 @@ app.get('/', (req, res) => {
 app.use(express.urlencoded({extended:true}));
 
 app.get('/error', (req,res) => {
-    throw new AppError('Unknown Error occured', 404);
+    throw new ExpressError('Unknown Error occured', 404);
     //console.log(unknownVariable);
 });
 
@@ -72,7 +99,7 @@ app.get('/campgrounds/new', (req, res) => {
 
 app.get('/campgrounds/:id', catchAsync(async (req, res) => { 
     const { id } = req.params;
-    const campground = await Campground.findById(id);
+    const campground = await Campground.findById(id).populate('reviews');
     res.render('campgrounds/show', {campground});
 }))
 
@@ -88,16 +115,29 @@ app.get('/campgrounds/:id/edit', catchAsync(async (req, res) => {
     res.render('campgrounds/edit', {campground});
 }))
 
-app.post('/campgrounds', catchAsync(async (req, res,next) => { 
+app.post('/campgrounds', validateCampground,catchAsync(async (req, res,next) => { 
 
-    if(!req.body.campground) throw new ExpressError('In valid Campground Data', 400);
+    //if(!req.body.campground) throw new ExpressError('In valid Campground Data', 400);
 
     const campground = new Campground(req.body.campground);
     await campground.save(); 
     res.redirect(`/campgrounds/${campground._id}`);
 }));
 
-app.put('/campgrounds/:id', catchAsync(async (req, res) => {
+app.post('/campgrounds/:id/reviews', validateReview, catchAsync(async (req, res,next) => { 
+    //if(!req.body.campground) throw new ExpressError('In valid Campground Data', 400);
+    const campground = await Campground.findById(req.params.id);
+    const review = new Review(req.body.review);
+    campground.reviews.push(review);
+    await review.save();
+    await campground.save();
+    res.redirect(`/campgrounds/${campground._id}`)
+    // const campground = new Campground(req.body.campground);
+    // await campground.save(); 
+    // res.redirect(`/campgrounds/${campground._id}`);
+}));
+
+app.put('/campgrounds/:id', validateCampground,catchAsync(async (req, res) => {
     const {id} = req.params;
     const campground = await Campground.findByIdAndUpdate(id, {...req.body.campground});
     res.redirect('/campgrounds');
@@ -109,6 +149,14 @@ app.delete('/campgrounds/:id/', catchAsync(async (req, res) => {
     res.redirect('/campgrounds');
 }));
 
+app.delete('/campgrounds/:id/reviews/:reviewId', catchAsync(async (req, res) => {
+    const {id, reviewId} = req.params;
+    // Remove campground review reference
+    await Campground.findByIdAndUpdate(id, {$pull : {reviews: reviewId}});
+    await Review.findByIdAndDelete(reviewId);
+    res.redirect(`/campgrounds/${id}`);
+}));
+
 // match all requests,
 app.all('*', (req, res, next) => {
     next(new ExpressError('Page not found', 404));
@@ -118,7 +166,7 @@ app.all('*', (req, res, next) => {
 app.use((err, req, res, next) => {
     const {statusCode=500,message='Something went wrong'} = err
     //res.send('Something went wrong');
-    res.status(statusCode).send(message);
+    res.status(statusCode).render('error', { err });
     // below sends to default handler;
     //next(err);
 });
