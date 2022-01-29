@@ -2,18 +2,16 @@ const express = require('express');
 const app = express();
 const path = require('path')
 const mongoose = require('mongoose');
-const Campground = require('./models/campground');
 const methodOverride = require('method-override');
 const morgan = require('morgan');
 const { nextTick } = require('process');
 const ejsMate = require('ejs-mate');
 const { reset } = require('nodemon');
 const ExpressError = require('./utils/ExpressError');
-const catchAsync = require('./utils/catchAsync');
 const Joi = require('joi');
-const { campgroundSchema, reviewSchema} = require('./schemas.js');
 const Review = require('./models/review');
-
+const session = require('express-session');
+const flash = require('connect-flash');
 
 const campground = require('./routes/campgrounds');
 const reviews = require('./routes/reviews');
@@ -55,6 +53,18 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(methodOverride('_method'))
 app.use(express.static(path.join(__dirname,'public')));
+const sessionConfig = {
+    secret: 'thisshouldbeabettersecret',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        httpOnly: true,
+        expires: Date.now() + 360000,
+        maxAge:360000
+    }
+}
+app.use(session(sessionConfig));
+app.use(flash());
 
 const validateCampground = (req, res, next) => {
     const {error} = campgroundSchema.validate(req.body);
@@ -81,6 +91,15 @@ const validateReview = (req, res, next) => {
 app.get('/', (req, res) => { 
     res.render('home');
 })
+
+//middleware to display any messages stored in flash
+app.use((req,res, next) => {
+    //res.locals.success will be accessed from ejs files.
+    res.locals.success = req.flash('success');
+    res.locals.error = req.flash('error');
+    next();
+});
+
 
 app.use(express.urlencoded({extended:true}));
 app.use('/campgrounds', campground);
