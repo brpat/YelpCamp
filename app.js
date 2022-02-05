@@ -4,17 +4,19 @@ const path = require('path')
 const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const morgan = require('morgan');
-const { nextTick } = require('process');
 const ejsMate = require('ejs-mate');
-const { reset } = require('nodemon');
 const ExpressError = require('./utils/ExpressError');
 const Joi = require('joi');
+const User = require('./models/user');
 const Review = require('./models/review');
 const session = require('express-session');
 const flash = require('connect-flash');
+const campgroundRoutes = require('./routes/campgrounds');
+const reviewsRoutes = require('./routes/reviews');
+const userRoutes =  require('./routes/users');
+const passport = require('passport');
+const localStrategy = require('passport-local');
 
-const campground = require('./routes/campgrounds');
-const reviews = require('./routes/reviews');
 
 app.engine('ejs', ejsMate);
 app.use((morgan('tiny')));
@@ -65,6 +67,13 @@ const sessionConfig = {
 }
 app.use(session(sessionConfig));
 app.use(flash());
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new localStrategy(User.authenticate()));
+//adding and removing user from session
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 const validateCampground = (req, res, next) => {
     const {error} = campgroundSchema.validate(req.body);
@@ -88,23 +97,33 @@ const validateReview = (req, res, next) => {
 }
 
 
-app.get('/', (req, res) => { 
-    res.render('home');
-})
-
 //middleware to display any messages stored in flash
 app.use((req,res, next) => {
-    //res.locals.success will be accessed from ejs files.
+    //res.locals will be accessed from ejs files.
+    res.locals.currentUser = req.user;
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
     next();
 });
 
+app.get('/makeUser', async(req, res) => {
+    const user = new User({
+        email:"test@test.com",
+        username:"test"
+    });
+    const newUser = await User.register(user, 'testpassword');
+    res.send(newUser);
+});
+
 
 app.use(express.urlencoded({extended:true}));
-app.use('/campgrounds', campground);
-app.use('/campgrounds/:id/reviews', reviews);
+app.use('/', userRoutes);
+app.use('/campgrounds', campgroundRoutes);
+app.use('/campgrounds/:id/reviews', reviewsRoutes);
 
+app.get('/', (req, res) => { 
+    res.render('home');
+})
 
 
 app.get('/error', (req,res) => {

@@ -3,6 +3,7 @@ const router = express.Router({mergeParams: true});
 const catchAsync = require('../utils/catchAsync');
 const ExpressError = require('../utils/ExpressError');
 const { reviewSchema} = require('../schemas.js');
+const {isLoggedIn} = require('../middleware');
 const Campground = require('../models/campground');
 const Review = require('../models/review');
 
@@ -17,7 +18,7 @@ const validateReview = (req, res, next) => {
 }
 
 
-router.post('/', validateReview, catchAsync(async (req, res,next) => { 
+router.post('/', isLoggedIn, validateReview, catchAsync(async (req, res,next) => { 
     //if(!req.body.campground) throw new ExpressError('In valid Campground Data', 400);
     const campground = await Campground.findById(req.params.id);
     const review = new Review(req.body.review);
@@ -29,7 +30,7 @@ router.post('/', validateReview, catchAsync(async (req, res,next) => {
 }));
 
 
-router.delete('/:reviewId', catchAsync(async (req, res) => {
+router.delete('/:reviewId', isLoggedIn, catchAsync(async (req, res) => {
     const {id, reviewId} = req.params;
     // Remove campground review reference
     await Campground.findByIdAndUpdate(id, {$pull : {reviews: reviewId}});
