@@ -61,8 +61,8 @@ const sessionConfig = {
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
-        expires: Date.now() + 360000,
-        maxAge:360000
+        expires: Date.now() + 3600000,
+        maxAge:3600000
     }
 }
 app.use(session(sessionConfig));
