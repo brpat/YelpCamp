@@ -32,7 +32,17 @@ const seedDb = async() =>{
                     location:`${cities[random1000].city}, ${cities[random1000].state}`,
                     image: "https://picsum.photos/500/600?random=1",
                     description: "lorem ipsum",
-                    price
+                    price,
+                    images: [
+                        {
+                            url: 'https://res.cloudinary.com/doaro3k2u/image/upload/v1644788227/YelpCamp/qluleylqympqr6bdvlcp.jpg',
+                            filename: 'YelpCamp/qluleylqympqr6bdvlcp'
+                        },
+                        {
+                            url: 'https://res.cloudinary.com/doaro3k2u/image/upload/v1644788987/YelpCamp/lobcsihdckbucpndedg2.png',
+                            filename: 'YelpCamp/lobcsihdckbucpndedg2'
+                        }
+                    ]
                 }
             );
         await camp.save();
