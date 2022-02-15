@@ -19,7 +19,9 @@
   "homepage": "https://github.com/brpat/YelpCamp#readme",
   "dependencies": {
     "bcrypt": "^5.0.1",
+    "cloudinary": "^1.28.1",
     "connect-flash": "^0.1.1",
+    "dotenv": "^16.0.0",
     "ejs": "^3.1.6",
     "ejs-mate": "^3.0.0",
     "express": "^4.17.2",
@@ -28,6 +30,8 @@
     "method-override": "^3.0.0",
     "mongoose": "^6.1.5",
     "morgan": "^1.10.0",
+    "multer": "^1.4.4",
+    "multer-storage-cloudinary": "^4.0.0",
     "nodemon": "^2.0.15",
     "passport": "^0.5.2",
     "passport-local": "^1.0.0",
