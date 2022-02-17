@@ -33,6 +33,7 @@ const seedDb = async() =>{
                     image: "https://picsum.photos/500/600?random=1",
                     description: "lorem ipsum",
                     price,
+                    geometry: { type: 'Point', coordinates: [ -82.6507, 27.7836 ] },
                     images: [
                         {
                             url: 'https://res.cloudinary.com/doaro3k2u/image/upload/v1644979386/YelpCamp/sgpwps3qbndvjwuwsr0u.jpg',
