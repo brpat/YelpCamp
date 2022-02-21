@@ -22,29 +22,15 @@ const passport = require('passport');
 const localStrategy = require('passport-local');
 const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require("helmet");
+const dbUrl = process.env.DB_URL || 'mongodb://localhost:27017/yelp-camp'
 
+const MongoDBStore = require('connect-mongo');
 
 app.engine('ejs', ejsMate);
 app.use((morgan('tiny')));
 
 
-// custom middleware logger
-// app.use((req,res,next) =>{
-//     req.requestTime = Date.now();
-//     console.log(req.method.toUpperCase(), req.path);
-//     next();
-// });
-
-// custom middleware logger for a specific path.
-// Will work on all CRUD operations for path
-// app.use('/newcampground', (req,res,next) =>{
-//     req.requestTime = Date.now();
-//     console.log(req.method.toUpperCase(), req.path);
-//     next();
-// });
-
-
-mongoose.connect('mongodb://localhost:27017/yelp-camp', {
+mongoose.connect(dbUrl, {
     useNewUrlParser:true,
     useUnifiedTopology:true,
 });
@@ -61,9 +47,23 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(methodOverride('_method'))
 app.use(express.static(path.join(__dirname,'public')));
+
+const secret = process.env.DB_STORE_SECRET;
+
+const store = new MongoDBStore({
+    mongoUrl: dbUrl,
+    secret,
+    touchAfter: 24 * 60 * 60
+});
+
+store.on('error',function(err) {
+    console.log(err);
+})
+
 const sessionConfig = {
+    store,
     name:'yelp_session_id',
-    secret: 'fakesecret',
+    secret: secret,
     resave: false,
     saveUninitialized: true,
     cookie: {
@@ -74,6 +74,7 @@ const sessionConfig = {
     }
 }
 app.use(session(sessionConfig));
+
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
